@@ -1,11 +1,11 @@
 package org.davistiba.gui;
 
-public enum Colour {
+public enum PieceColor {
     WHITE,
-    BLACK;
+    BLACK, YELLOW;
 
-    public Colour getOpposite() {
-        Colour result = null;
+    public PieceColor getOpposite() {
+        PieceColor result = null;
         if (this == WHITE) {
             result = BLACK;
         } else if (this == BLACK) {

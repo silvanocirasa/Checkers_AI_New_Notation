@@ -1,7 +1,7 @@
 package org.davistiba.gui;
 
-import org.davistiba.game.Piece;
-import org.davistiba.game.Player;
+import org.davistiba.game.PieceLogic;
+import org.davistiba.game.StartPlayer;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -12,17 +12,16 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 
 /**
  * Black or white checker piece (clickable button component)
  */
-public class CheckerButton extends JButton {
+public class PieceModel extends JButton {
 
     private final int position;
-    private final Piece piece;
-    private static final Border YELLOW_BORDER = BorderFactory.createLineBorder(Color.YELLOW, 2);
+    private final PieceLogic piece;
+    private static final Border YELLOW_BORDER = BorderFactory.createLineBorder(java.awt.Color.YELLOW, 2);
     private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
 
     // drag drop
@@ -31,15 +30,15 @@ public class CheckerButton extends JButton {
     int screenX = 0;
     int screenY = 0;
 
-    public CheckerButton(int position, Piece piece, GUI gui) {
+    public PieceModel(int position, PieceLogic piece, GUIControl gui) {
         super();
         this.position = position;
         this.piece = piece;
         this.setBorder(EMPTY_BORDER);
         this.setContentAreaFilled(false);
         setCustomIcon(piece);
-        if (piece.getPlayer() == Player.HUMAN) {
-            if (SettingsPanel.dragDrop) {
+        if (piece.getPlayer() == StartPlayer.HUMAN) {
+            if (SettingsView.dragDrop) {
                 this.activateDragDrop(position, gui);
                 return;
             }
@@ -69,9 +68,9 @@ public class CheckerButton extends JButton {
      * (Only if drag-drop mode is ON) Compute mouse drag distance on the Board
      *
      * @param position position of piece on board
-     * @param gui      the parent element (GUI)
+     * @param gui      the parent element (GUIControl)
      */
-    private void activateDragDrop(int position, final GUI gui) {
+    private void activateDragDrop(int position, final GUIControl gui) {
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
@@ -85,8 +84,8 @@ public class CheckerButton extends JButton {
             public void mouseReleased(MouseEvent mouseEvent) {
                 int deltaX = mouseEvent.getXOnScreen() - screenX;
                 int deltaY = mouseEvent.getYOnScreen() - screenY;
-                int dx = (int) Math.round((double) deltaX / (double) SettingsPanel.squareSize);
-                int dy = (int) Math.round((double) deltaY / (double) SettingsPanel.squareSize);
+                int dx = (int) Math.round((double) deltaX / (double) SettingsView.squareSize);
+                int dy = (int) Math.round((double) deltaY / (double) SettingsView.squareSize);
                 gui.onMouseRelease(position, dx, dy);
             }
         });
@@ -105,7 +104,7 @@ public class CheckerButton extends JButton {
         return position;
     }
 
-    public Piece getPiece() {
+    public PieceLogic getPiece() {
         return piece;
     }
 
@@ -116,14 +115,14 @@ public class CheckerButton extends JButton {
      * @return InputStream of data
      */
     protected static URL getImageResource(final String fileName) {
-        return CheckerButton.class.getClassLoader().getResource(fileName);
+        return PieceModel.class.getClassLoader().getResource(fileName);
     }
 
-    private void setCustomIcon(Piece piece) {
+    private void setCustomIcon(PieceLogic piece) {
         BufferedImage buttonIcon = null;
-        Colour colour = SettingsPanel.getColour(piece.getPlayer());
+        PieceColor colour = SettingsView.getColour(piece.getPlayer());
         try {
-            if (colour == Colour.BLACK) {
+            if (colour == PieceColor.BLACK) {
                 if (piece.isKing()) {
                     buttonIcon = ImageIO.read(getImageResource("images/blackking.png"));
                 } else {
@@ -141,7 +140,7 @@ public class CheckerButton extends JButton {
         }
 
         if (buttonIcon != null) {
-            Image resized = buttonIcon.getScaledInstance(SettingsPanel.checkerWidth, SettingsPanel.checkerHeight, Image.SCALE_DEFAULT);
+            Image resized = buttonIcon.getScaledInstance(SettingsView.checkerWidth, SettingsView.checkerHeight, Image.SCALE_DEFAULT);
             ImageIcon icon = new ImageIcon(resized);
             this.setIcon(icon);
         }

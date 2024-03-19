@@ -1,23 +1,22 @@
 package org.davistiba.gui;
 
-import org.davistiba.game.BoardState;
+import org.davistiba.game.GameState;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 
 /**
  * Button representing a possible move for a player
  */
-public class GhostButton extends JButton {
+public class ValidMoveModel extends JButton {
 
-    private final BoardState boardstate;
+    private final GameState boardstate;
 
-    public GhostButton(BoardState state) {
+    public ValidMoveModel(GameState state) {
         super();
         this.boardstate = state;
         this.setBorder(BorderFactory.createEmptyBorder());
@@ -26,13 +25,13 @@ public class GhostButton extends JButton {
     }
 
     private static URL getImageResource(final String fileName) {
-        return GhostButton.class.getClassLoader().getResource(fileName);
+        return ValidMoveModel.class.getClassLoader().getResource(fileName);
     }
 
     private void setIcon() {
         BufferedImage buttonIcon = null;
         try {
-            if (SettingsPanel.helpMode) {
+            if (SettingsView.helpMode) {
                 buttonIcon = ImageIO.read(getImageResource("images/dottedcircle.png"));
             } else {
                 buttonIcon = ImageIO.read(getImageResource("images/dottedcircleyellow.png"));
@@ -41,14 +40,14 @@ public class GhostButton extends JButton {
             System.err.println(e.getMessage());
         }
         if (buttonIcon != null) {
-            Image resized = buttonIcon.getScaledInstance(SettingsPanel.ghostButtonWidth, SettingsPanel.ghostButtonHeight, Image.SCALE_DEFAULT);
+            Image resized = buttonIcon.getScaledInstance(SettingsView.ghostButtonWidth, SettingsView.ghostButtonHeight, Image.SCALE_DEFAULT);
             ImageIcon icon = new ImageIcon(resized);
             this.setIcon(icon);
         }
     }
 
 
-    public BoardState getBoardstate() {
+    public GameState getBoardstate() {
         return boardstate;
     }
 }

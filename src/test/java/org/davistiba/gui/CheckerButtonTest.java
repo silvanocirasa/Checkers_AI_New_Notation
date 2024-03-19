@@ -1,13 +1,10 @@
 package org.davistiba.gui;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,7 +27,7 @@ public class CheckerButtonTest {
 
     @Test
     public void test_getImageResource() {
-        URL path = CheckerButton.getImageResource(fileName);
+        URL path = PieceModel.getImageResource(fileName);
         Assert.assertNotNull("Image file missing", path);
     }
 

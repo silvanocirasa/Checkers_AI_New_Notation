@@ -1,11 +1,11 @@
 package org.davistiba.game;
 
-public class Piece {
+public class PieceLogic {
 
-    private final Player player;
+    private final StartPlayer player;
     private final boolean king;
 
-    public Piece(Player player, boolean king) {
+    public PieceLogic(StartPlayer player, boolean king) {
         this.player = player;
         this.king = king;
     }
@@ -14,8 +14,17 @@ public class Piece {
         return king;
     }
 
-    public Player getPlayer() {
+    public StartPlayer getPlayer() {
         return player;
+    }
+
+    /**
+     * Get possible x-direction movements
+     *
+     * @return
+     */
+    public int[] getValidMoveX() {
+        return new int[]{-1, 1};
     }
 
     /**
@@ -23,7 +32,7 @@ public class Piece {
      *
      * @return
      */
-    public int[] getYMovements() {
+    public int[] getValidMoveY() {
         int[] result = new int[]{};
         if (king) {
             result = new int[]{-1, 1};
@@ -38,15 +47,6 @@ public class Piece {
             }
         }
         return result;
-    }
-
-    /**
-     * Get possible x-direction movements
-     *
-     * @return
-     */
-    public int[] getXMovements() {
-        return new int[]{-1, 1};
     }
 
 }

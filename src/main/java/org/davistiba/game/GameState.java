@@ -5,63 +5,63 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 
-public class BoardState {
+public class GameState {
 
     // side length of the board
-    public static final int SIDE_LENGTH = 8;
-    public static final int NUM_SQUARES = SIDE_LENGTH * SIDE_LENGTH; // 8 x 8
+    public static final int SIDE_LENGTH = 10;
+    public static final int NUM_SQUARES = SIDE_LENGTH * SIDE_LENGTH; // 10 x 10
     // state of the board
-    Piece[] state;
+    PieceLogic[] state;
     // origin and destination position of the most recent move
     private int fromPos = -1;
     private int toPos = -1;
     // origin position of double jump move, used to invalidate other moves during multi-move
     private int doublejumpPos = -1;
     // player's turn
-    private Player turn;
-    // track number of human/AI pieces on board
-    public HashMap<Player, Integer> pieceCount;
-    private HashMap<Player, Integer> kingCount;
+    private StartPlayer turn;
+    // track number of human/ComputerEnemy pieces on board
+    public HashMap<StartPlayer, Integer> pieceCount;
+    private HashMap<StartPlayer, Integer> kingCount;
 
-    public BoardState() {
-        state = new Piece[BoardState.NUM_SQUARES];
+    public GameState() {
+        state = new PieceLogic[GameState.NUM_SQUARES];
     }
 
     /**
      * Set up initial board state.
      */
-    public static BoardState initialState() {
-        BoardState bs = new BoardState();
+    public static GameState initialState() {
+        GameState bs = new GameState();
         bs.turn = Settings.FIRSTMOVE;
         for (int i = 0; i < bs.state.length; i++) {
             int y = i / SIDE_LENGTH;
             int x = i % SIDE_LENGTH;
             // place on black squares only
             if ((x + y) % 2 == 1) {
-                // AI pieces in first 3 rows
+                // ComputerEnemy pieces in first 3 rows
                 if (y < 3) {
-                    bs.state[i] = new Piece(Player.AI, false);
+                    bs.state[i] = new PieceLogic(StartPlayer.AI, false);
                 }
                 // Human pieces in last 3 rows
                 else if (y > 4) {
-                    bs.state[i] = new Piece(Player.HUMAN, false);
+                    bs.state[i] = new PieceLogic(StartPlayer.HUMAN, false);
                 }
             }
         }
         // count initial pieces (generalizable, not hard-coded)
-        int aiCount = (int) Arrays.stream(bs.state).filter(Objects::nonNull).filter(x -> x.getPlayer() == Player.AI).count();
-        int humanCount = (int) Arrays.stream(bs.state).filter(Objects::nonNull).filter(x -> x.getPlayer() == Player.HUMAN).count();
+        int aiCount = (int) Arrays.stream(bs.state).filter(Objects::nonNull).filter(x -> x.getPlayer() == StartPlayer.AI).count();
+        int humanCount = (int) Arrays.stream(bs.state).filter(Objects::nonNull).filter(x -> x.getPlayer() == StartPlayer.HUMAN).count();
         bs.pieceCount = new HashMap<>();
-        bs.pieceCount.put(Player.AI, aiCount);
-        bs.pieceCount.put(Player.HUMAN, humanCount);
+        bs.pieceCount.put(StartPlayer.AI, aiCount);
+        bs.pieceCount.put(StartPlayer.HUMAN, humanCount);
         bs.kingCount = new HashMap<>();
-        bs.kingCount.put(Player.AI, 0);
-        bs.kingCount.put(Player.HUMAN, 0);
+        bs.kingCount.put(StartPlayer.AI, 0);
+        bs.kingCount.put(StartPlayer.HUMAN, 0);
         return bs;
     }
 
-    private BoardState deepCopy() {
-        BoardState bs = new BoardState();
+    private GameState deepCopy() {
+        GameState bs = new GameState();
         System.arraycopy(this.state, 0, bs.state, 0, bs.state.length);
         return bs;
     }
@@ -69,10 +69,10 @@ public class BoardState {
     /**
      * Compute heuristic indicating how desirable this state is to a given player.
      *
-     * @param player current Player
+     * @param player current StartPlayer
      * @return level
      */
-    public int computeHeuristic(Player player) {
+    public int computeHeuristic(StartPlayer player) {
         switch (Settings.HEURISTIC) {
             case 1:
                 return heuristic1(player);
@@ -82,7 +82,7 @@ public class BoardState {
         throw new RuntimeException("Invalid heuristic");
     }
 
-    private int heuristic1(Player player) {
+    private int heuristic1(StartPlayer player) {
         // 'infinite' value for winning
         if (this.pieceCount.get(player.getOpposite()) == 0) {
             return Integer.MAX_VALUE;
@@ -96,7 +96,7 @@ public class BoardState {
     }
 
 
-    private int heuristic2(Player player) {
+    private int heuristic2(StartPlayer player) {
         // 'infinite' value for winning
         if (this.pieceCount.get(player.getOpposite()) == 0) {
             return Integer.MAX_VALUE;
@@ -109,7 +109,7 @@ public class BoardState {
         }
     }
 
-    private int pieceScore(Player player) {
+    private int pieceScore(StartPlayer player) {
         return this.pieceCount.get(player) + this.kingCount.get(player);
     }
 
@@ -119,9 +119,9 @@ public class BoardState {
      *
      * @return
      */
-    public ArrayList<BoardState> getSuccessors() {
+    public ArrayList<GameState> getSuccessors() {
         // compute jump successors
-        ArrayList<BoardState> successors = getSuccessors(true);
+        ArrayList<GameState> successors = getSuccessors(true);
         if (Settings.FORCETAKES) {
             if (!successors.isEmpty()) {
                 // return only jump successors if available (forced)
@@ -143,8 +143,8 @@ public class BoardState {
      * @param jump must jump?
      * @return list of allowable positions
      */
-    public ArrayList<BoardState> getSuccessors(boolean jump) {
-        ArrayList<BoardState> result = new ArrayList<>();
+    public ArrayList<GameState> getSuccessors(boolean jump) {
+        ArrayList<GameState> result = new ArrayList<>();
         for (int i = 0; i < this.state.length; i++) {
             if (state[i] != null) {
                 if (state[i].getPlayer() == turn) {
@@ -161,10 +161,10 @@ public class BoardState {
      * @param position target
      * @return list of allowable states
      */
-    public ArrayList<BoardState> getSuccessors(int position) {
+    public ArrayList<GameState> getSuccessors(int position) {
         if (Settings.FORCETAKES) {
             // compute jump successors GLOBALLY
-            ArrayList<BoardState> jumps = getSuccessors(true);
+            ArrayList<GameState> jumps = getSuccessors(true);
             if (!jumps.isEmpty()) {
                 // return only jump successors if available (forced)
                 return getSuccessors(position, true);
@@ -174,7 +174,7 @@ public class BoardState {
             }
         } else {
             // return jump and non-jump successors
-            ArrayList<BoardState> result = new ArrayList<>();
+            ArrayList<GameState> result = new ArrayList<>();
             result.addAll(getSuccessors(position, true));
             result.addAll(getSuccessors(position, false));
             return result;
@@ -188,11 +188,11 @@ public class BoardState {
      * @param jump must jump?
      * @return valid states
      */
-    public ArrayList<BoardState> getSuccessors(int position, boolean jump) {
+    public ArrayList<GameState> getSuccessors(int position, boolean jump) {
         if (this.getPiece(position).getPlayer() != turn) {
             throw new IllegalArgumentException("No such piece at that position");
         }
-        Piece piece = this.state[position];
+        PieceLogic piece = this.state[position];
         if (jump) {
             return jumpSuccessors(piece, position);
         } else {
@@ -207,13 +207,13 @@ public class BoardState {
      * @param position target position
      * @return list of valid states
      */
-    private ArrayList<BoardState> nonJumpSuccessors(Piece piece, int position) {
-        ArrayList<BoardState> result = new ArrayList<>();
+    private ArrayList<GameState> nonJumpSuccessors(PieceLogic piece, int position) {
+        ArrayList<GameState> result = new ArrayList<>();
         int x = position % SIDE_LENGTH;
         int y = position / SIDE_LENGTH;
         // loop through allowed movement directions
-        for (int dx : piece.getXMovements()) {
-            for (int dy : piece.getYMovements()) {
+        for (int dx : piece.getValidMoveX()) {
+            for (int dy : piece.getValidMoveY()) {
                 int newX = x + dx;
                 int newY = y + dy;
                 // new position valid?
@@ -236,8 +236,8 @@ public class BoardState {
      * @param position target position
      * @return list of valid states
      */
-    private ArrayList<BoardState> jumpSuccessors(Piece piece, int position) {
-        ArrayList<BoardState> result = new ArrayList<>();
+    private ArrayList<GameState> jumpSuccessors(PieceLogic piece, int position) {
+        ArrayList<GameState> result = new ArrayList<>();
         // no other jump moves are valid while doing double jump
         if (doublejumpPos > 0 && position != doublejumpPos) {
             return result;
@@ -245,8 +245,8 @@ public class BoardState {
         int x = position % SIDE_LENGTH;
         int y = position / SIDE_LENGTH;
         // loop through allowed movement directions
-        for (int dx : piece.getXMovements()) {
-            for (int dy : piece.getYMovements()) {
+        for (int dx : piece.getValidMoveX()) {
+            for (int dy : piece.getValidMoveY()) {
                 int newX = x + dx;
                 int newY = y + dy;
                 // new position valid?
@@ -270,14 +270,14 @@ public class BoardState {
         return result;
     }
 
-    private BoardState createNewState(int oldPos, int newPos, Piece piece, boolean jumped, int dy, int dx) {
-        BoardState result = this.deepCopy();
+    private GameState createNewState(int oldPos, int newPos, PieceLogic piece, boolean jumped, int dy, int dx) {
+        GameState result = this.deepCopy();
         result.pieceCount = new HashMap<>(pieceCount);
         result.kingCount = new HashMap<>(kingCount);
         // check if king position
         boolean kingConversion = false;
         if (isKingPosition(newPos, piece.getPlayer())) {
-            piece = new Piece(piece.getPlayer(), true);
+            piece = new PieceLogic(piece.getPlayer(), true);
             kingConversion = true;
             // increase king count
             result.kingCount.replace(piece.getPlayer(), result.kingCount.get(piece.getPlayer()) + 1);
@@ -288,7 +288,7 @@ public class BoardState {
         // store meta data
         result.fromPos = oldPos;
         result.toPos = newPos;
-        Player oppPlayer = piece.getPlayer().getOpposite();
+        StartPlayer oppPlayer = piece.getPlayer().getOpposite();
         result.turn = oppPlayer;
         if (jumped) {
             // remove captured piece
@@ -305,11 +305,11 @@ public class BoardState {
         return result;
     }
 
-    private boolean isKingPosition(int pos, Player player) {
+    private boolean isKingPosition(int pos, StartPlayer player) {
         int y = pos / SIDE_LENGTH;
-        if (y == 0 && player == Player.HUMAN) {
+        if (y == 0 && player == StartPlayer.HUMAN) {
             return true;
-        } else return y == SIDE_LENGTH - 1 && player == Player.AI;
+        } else return y == SIDE_LENGTH - 1 && player == StartPlayer.AI;
     }
 
     /**
@@ -336,7 +336,7 @@ public class BoardState {
      *
      * @return
      */
-    public Player getTurn() {
+    public StartPlayer getTurn() {
         return turn;
     }
 
@@ -346,7 +346,7 @@ public class BoardState {
      * @return
      */
     public boolean isGameOver() {
-        return (pieceCount.get(Player.AI) == 0 || pieceCount.get(Player.HUMAN) == 0);
+        return (pieceCount.get(StartPlayer.AI) == 0 || pieceCount.get(StartPlayer.HUMAN) == 0);
     }
 
     /**
@@ -355,7 +355,7 @@ public class BoardState {
      * @param i Position in board.
      * @return
      */
-    public Piece getPiece(int i) {
+    public PieceLogic getPiece(int i) {
         return state[i];
     }
 
@@ -366,7 +366,7 @@ public class BoardState {
      * @param x
      * @return
      */
-    private Piece getPiece(int y, int x) {
+    private PieceLogic getPiece(int y, int x) {
         return getPiece(SIDE_LENGTH * y + x);
     }
 

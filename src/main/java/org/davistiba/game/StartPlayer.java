@@ -1,11 +1,11 @@
 package org.davistiba.game;
 
-public enum Player {
+public enum StartPlayer {
     AI,
     HUMAN;
 
-    public Player getOpposite() {
-        Player result = null;
+    public StartPlayer getOpposite() {
+        StartPlayer result = null;
         if (this == AI) {
             result = HUMAN;
         } else if (this == HUMAN) {

@@ -17,24 +17,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class GUI extends JFrame {
+public class GUIControl extends JFrame {
 
     private Game game;
-    private ArrayList<BoardState> possibleMoves;
-    private SquarePanel[] squares;
+    private ArrayList<GameState> possibleMoves;
+    private BoardView[] squares;
     private JPanel checkerboardPanel;
     private JTextArea textBox;
     // hint feature
-    private BoardState hintMove;
+    private GameState hintMove;
     private List<Integer> helpMoves;
     private final HashMap<Integer, Integer> difficultyMapping;
     private final String rulesList = getRulesList();
     private final ScheduledExecutorService executor;
     private final Font MY_HELVETICA;
 
-    private static final Logger logger = Logger.getLogger(GUI.class.getName());
+    private static final Logger logger = Logger.getLogger(GUIControl.class.getName());
 
-    public GUI() {
+    public GUIControl() {
         this.setTitle("Checkers");
         difficultyMapping = new HashMap<>();
         difficultyMapping.put(1, 1);
@@ -52,13 +52,13 @@ public class GUI extends JFrame {
         possibleMoves = new ArrayList<>();
         hintMove = null;
         setup();
-        if (SettingsPanel.hintMode) {
+        if (SettingsView.hintMode) {
             onHintClick();
         }
     }
 
     /**
-     * Pop up dialog for user to choose game settings (e.g. AI difficulty, starting player etc)
+     * Pop up dialog for user to choose game settings (e.g. ComputerEnemy difficulty, starting player etc)
      */
     private void settingsPopup() {
         // panel for options
@@ -94,8 +94,8 @@ public class GUI extends JFrame {
         JRadioButton aiRadioButton = new JRadioButton("Computer Plays First");
         buttonGroup.add(humanFirstRadioButton);
         buttonGroup.add(aiRadioButton);
-        aiRadioButton.setSelected(Settings.FIRSTMOVE == Player.AI);
-        humanFirstRadioButton.setSelected(Settings.FIRSTMOVE == Player.HUMAN);
+        aiRadioButton.setSelected(Settings.FIRSTMOVE == StartPlayer.AI);
+        humanFirstRadioButton.setSelected(Settings.FIRSTMOVE == StartPlayer.HUMAN);
         // add components to panel
         panel.add(text1);
         panel.add(slider);
@@ -108,8 +108,8 @@ public class GUI extends JFrame {
         // process results
         if (result == JOptionPane.OK_OPTION) {
             Settings.AI_DEPTH = difficultyMapping.get(slider.getValue());
-            logger.info("Selected AI depth = " + Settings.AI_DEPTH);
-            Settings.FIRSTMOVE = humanFirstRadioButton.isSelected() ? Player.HUMAN : Player.AI;
+            logger.info("Selected ComputerEnemy depth = " + Settings.AI_DEPTH);
+            Settings.FIRSTMOVE = humanFirstRadioButton.isSelected() ? StartPlayer.HUMAN : StartPlayer.AI;
             Settings.FORCETAKES = forceTakesButton.isSelected();
         } else {
             this.dispose();
@@ -119,15 +119,15 @@ public class GUI extends JFrame {
 
 
     /**
-     * Sets up initial GUI configuration.
+     * Sets up initial GUIControl configuration.
      */
     public void setup() {
         switch (Settings.FIRSTMOVE) {
             case AI:
-                SettingsPanel.AIcolour = Colour.WHITE;
+                SettingsView.AIcolour = PieceColor.WHITE;
                 break;
             case HUMAN:
-                SettingsPanel.AIcolour = Colour.BLACK;
+                SettingsView.AIcolour = PieceColor.BLACK;
                 break;
         }
 
@@ -141,10 +141,10 @@ public class GUI extends JFrame {
         contentPane.add(textPanel);
         textBox = new JTextArea();
         textBox.setFont(MY_HELVETICA);
-        textBox.setForeground(Color.RED);
+        textBox.setForeground(java.awt.Color.RED);
         textBox.setEditable(false);
         textBox.setLineWrap(false);
-        textBox.setCaretColor(Color.RED);
+        textBox.setCaretColor(java.awt.Color.RED);
         textBox.setWrapStyleWord(true);
         textBox.setAutoscrolls(true);
         textPanel.add(textBox);
@@ -154,7 +154,7 @@ public class GUI extends JFrame {
         this.pack();
         this.setVisible(true);
         this.setResizable(false);
-        if (Settings.FIRSTMOVE == Player.AI) {
+        if (Settings.FIRSTMOVE == StartPlayer.AI) {
             aiMove();
         }
     }
@@ -164,7 +164,7 @@ public class GUI extends JFrame {
     }
 
     /**
-     * Updates the checkerboard GUI based on the game state.
+     * Updates the checkerboard GUIControl based on the game state.
      */
     private void updateCheckerBoard() {
         checkerboardPanel.removeAll();
@@ -178,7 +178,7 @@ public class GUI extends JFrame {
     }
 
     private void addSquares() {
-        squares = new SquarePanel[BoardState.NUM_SQUARES];
+        squares = new BoardView[GameState.NUM_SQUARES];
         int fromPos = -1;
         int toPos = -1;
         if (hintMove != null) {
@@ -186,10 +186,10 @@ public class GUI extends JFrame {
             toPos = hintMove.getToPos();
         }
         GridBagConstraints c = new GridBagConstraints();
-        for (int i = 0; i < BoardState.NUM_SQUARES; i++) {
-            c.gridx = i % BoardState.SIDE_LENGTH;
-            c.gridy = i / BoardState.SIDE_LENGTH;
-            squares[i] = new SquarePanel(c.gridx, c.gridy);
+        for (int i = 0; i < GameState.NUM_SQUARES; i++) {
+            c.gridx = i % GameState.SIDE_LENGTH;
+            c.gridy = i / GameState.SIDE_LENGTH;
+            squares[i] = new BoardView(c.gridx, c.gridy);
             if (i == fromPos) {
                 squares[i].setHighlighted();
             }
@@ -207,19 +207,19 @@ public class GUI extends JFrame {
 
 
     /**
-     * Add checker pieces to the GUI corresponding to the game state
+     * Add checker pieces to the GUIControl corresponding to the game state
      */
     private void addPieces() {
         GridBagConstraints c = new GridBagConstraints();
         game.getState();
-        for (int i = 0; i < BoardState.NUM_SQUARES; i++) {
+        for (int i = 0; i < GameState.NUM_SQUARES; i++) {
             game.getState();
-            c.gridx = i % BoardState.SIDE_LENGTH;
+            c.gridx = i % GameState.SIDE_LENGTH;
             game.getState();
-            c.gridy = i / BoardState.SIDE_LENGTH;
+            c.gridy = i / GameState.SIDE_LENGTH;
             if (game.getState().getPiece(i) != null) {
-                Piece piece = game.getState().getPiece(i);
-                CheckerButton button = new CheckerButton(i, piece, this);
+                PieceLogic piece = game.getState().getPiece(i);
+                PieceModel button = new PieceModel(i, piece, this);
                 button.addActionListener(this::onPieceClick);
                 checkerboardPanel.add(button, c);
             }
@@ -230,10 +230,10 @@ public class GUI extends JFrame {
      * Add "ghost buttons" showing possible moves for the player
      */
     private void addGhostButtons() {
-        for (BoardState state : possibleMoves) {
+        for (GameState state : possibleMoves) {
             int newPos = state.getToPos();
 
-            GhostButton button = new GhostButton(state);
+            ValidMoveModel button = new ValidMoveModel(state);
             button.addActionListener(this::onGhostButtonClick);
             squares[newPos].add(button);
         }
@@ -264,8 +264,8 @@ public class GUI extends JFrame {
         JMenu viewMenu = new JMenu("View");
         JRadioButtonMenuItem viewItemHelpMode = new JRadioButtonMenuItem("Help mode");
         JRadioButtonMenuItem viewItemHintMode = new JRadioButtonMenuItem("Hint mode");
-        viewItemHelpMode.setSelected(SettingsPanel.helpMode);
-        viewItemHintMode.setSelected(SettingsPanel.hintMode);
+        viewItemHelpMode.setSelected(SettingsView.helpMode);
+        viewItemHintMode.setSelected(SettingsView.hintMode);
         JMenu helpMenu = new JMenu("Help");
         JMenuItem rulesItem = new JMenuItem("Game Rules");
         JMenuItem helpItemHint = new JMenuItem("Hint!");
@@ -302,8 +302,8 @@ public class GUI extends JFrame {
     //*********************** ON CLICK METHODS **********************/
 
     public void onMouseRelease(int position, int dx, int dy) {
-        MoveFeedback feedback = game.playerMove(position, dx, dy);
-        if (feedback == MoveFeedback.SUCCESS) {
+        Messages feedback = game.playerMove(position, dx, dy);
+        if (feedback == Messages.SUCCESS) {
             updateCheckerBoard();
             aiMove();
         } else {
@@ -314,27 +314,27 @@ public class GUI extends JFrame {
 
     private void onHintClick() {
         if (!game.isGameOver()) {
-            AI ai = new AI(10, Player.HUMAN);
+            ComputerEnemy ai = new ComputerEnemy(10, StartPlayer.HUMAN);
             helpMoves = null;
-            hintMove = ai.move(this.game.getState(), Player.HUMAN);
+            hintMove = ai.makeMove(this.game.getState(), StartPlayer.HUMAN);
             updateCheckerBoard();
         }
     }
 
     private void onHelpMovablesClick() {
         hintMove = null;
-        helpMoves = game.getState().getSuccessors().stream().map(BoardState::getFromPos).collect(Collectors.toList());
+        helpMoves = game.getState().getSuccessors().stream().map(GameState::getFromPos).collect(Collectors.toList());
         updateCheckerBoard();
     }
 
     private void onHelpModeClick() {
-        SettingsPanel.helpMode = !SettingsPanel.helpMode;
-        logger.info("help mode: " + SettingsPanel.helpMode);
+        SettingsView.helpMode = !SettingsView.helpMode;
+        logger.info("help mode: " + SettingsView.helpMode);
     }
 
     private void onHintModeClick() {
-        SettingsPanel.hintMode = !SettingsPanel.hintMode;
-        logger.info("hint mode: " + SettingsPanel.hintMode);
+        SettingsView.hintMode = !SettingsView.hintMode;
+        logger.info("hint mode: " + SettingsView.hintMode);
         onHintClick();
     }
 
@@ -344,16 +344,16 @@ public class GUI extends JFrame {
      * @param actionEvent event
      */
     private void onPieceClick(ActionEvent actionEvent) {
-        if (game.getTurn() == Player.HUMAN) {
-            CheckerButton button = (CheckerButton) actionEvent.getSource();
+        if (game.getTurn() == StartPlayer.HUMAN) {
+            PieceModel button = (PieceModel) actionEvent.getSource();
             int pos = button.getPosition();
-            if (button.getPiece().getPlayer() == Player.HUMAN) {
+            if (button.getPiece().getPlayer() == StartPlayer.HUMAN) {
                 possibleMoves = game.getValidMoves(pos);
                 updateCheckerBoard();
                 if (possibleMoves.isEmpty()) {
-                    MoveFeedback feedback = game.moveFeedbackClick(pos);
+                    Messages feedback = game.moveFeedbackClick(pos);
                     updateText(feedback.toString());
-                    if (feedback == MoveFeedback.FORCED_JUMP) {
+                    if (feedback == Messages.FORCED_JUMP) {
                         // show movable jump pieces
                         onHelpMovablesClick();
                     }
@@ -370,10 +370,10 @@ public class GUI extends JFrame {
      * @param actionEvent event
      */
     private void onGhostButtonClick(ActionEvent actionEvent) {
-        if (!game.isGameOver() && game.getTurn() == Player.HUMAN) {
+        if (!game.isGameOver() && game.getTurn() == StartPlayer.HUMAN) {
             hintMove = null;
             helpMoves = null;
-            GhostButton button = (GhostButton) actionEvent.getSource();
+            ValidMoveModel button = (ValidMoveModel) actionEvent.getSource();
             game.playerMove(button.getBoardstate());
             possibleMoves = new ArrayList<>();
             updateCheckerBoard();
@@ -387,27 +387,27 @@ public class GUI extends JFrame {
     }
 
     private void aiMove() {
-        // perform AI move
+        // perform ComputerEnemy move
         long startTime = System.nanoTime();
         game.aiMove();
         // compute time taken
         long aiMoveDurationInMs = (long) ((System.nanoTime() - startTime) / 1E6);
         // compute necessary delay time (not less than zero)
-        long delayInMs = Math.max(0, SettingsPanel.AiMinPauseDurationInMs - aiMoveDurationInMs);
+        long delayInMs = Math.max(0, SettingsView.AiMinPauseDurationInMs - aiMoveDurationInMs);
         // schedule delayed update
         executor.schedule(this::invokeAiUpdate, delayInMs, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * Update checkerboard and trigger new AI move if necessary
+     * Update checkerboard and trigger new ComputerEnemy move if necessary
      */
     private void invokeAiUpdate() {
         SwingUtilities.invokeLater(() -> {
             updateCheckerBoard();
-            if (!game.isGameOver() && game.getTurn() == Player.AI) {
+            if (!game.isGameOver() && game.getTurn() == StartPlayer.AI) {
                 aiMove();
-            } else if (SettingsPanel.hintMode) {
-                // in hint mode, display hint after AI move
+            } else if (SettingsView.hintMode) {
+                // in hint mode, display hint after ComputerEnemy move
                 onHintClick();
             }
         });
@@ -451,7 +451,7 @@ public class GUI extends JFrame {
     }
 
     /**
-     * Ask human Player whether they want to replay or exit
+     * Ask human StartPlayer whether they want to replay or exit
      */
     private void gameOverDialog() {
         String[] options = {"Yes", "No"};
@@ -504,7 +504,7 @@ public class GUI extends JFrame {
     private void onUndoClick() {
         game.undo();
         updateCheckerBoard();
-        if (SettingsPanel.hintMode) {
+        if (SettingsView.hintMode) {
             onHintClick();
         }
     }

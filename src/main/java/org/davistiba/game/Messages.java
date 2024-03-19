@@ -1,6 +1,6 @@
 package org.davistiba.game;
 
-public enum MoveFeedback {
+public enum Messages {
     NOT_DIAGONAL("You can only move diagonally."),
     FORCED_JUMP("You're forced to take."),
     NO_FREE_SPACE("You can't move onto another piece."),
@@ -13,7 +13,7 @@ public enum MoveFeedback {
 
     private final String name;
 
-    MoveFeedback(String s) {
+    Messages(String s) {
         name = s;
     }
 

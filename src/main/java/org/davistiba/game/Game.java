@@ -5,101 +5,101 @@ import java.util.Stack;
 
 public class Game {
 
-    private final Stack<BoardState> state;
+    private final Stack<GameState> state;
     private final int memory;
-    private final AI ai;
-    private boolean humanWon;
+    private final ComputerEnemy ai;
+    private boolean playerWon;
 
     public Game() {
         memory = Settings.UNDO_MEMORY;
         state = new Stack<>();
-        state.push(BoardState.initialState());
-        ai = new AI();
+        state.push(GameState.initialState());
+        ai = new ComputerEnemy();
     }
 
-    public void playerMove(BoardState newState) {
-        if (!isGameOver() && state.peek().getTurn() == Player.HUMAN) {
+    public void playerMove(GameState newState) {
+        if (!isGameOver() && state.peek().getTurn() == StartPlayer.HUMAN) {
             updateState(newState);
         }
     }
 
-    public MoveFeedback playerMove(int fromPos, int dx, int dy) {
-        int toPos = fromPos + dx + BoardState.SIDE_LENGTH * dy;
+    public Messages playerMove(int fromPos, int dx, int dy) {
+        int toPos = fromPos + dx + GameState.SIDE_LENGTH * dy;
         if (toPos > getState().state.length) {
-            return MoveFeedback.NOT_ON_BOARD;
+            return Messages.NOT_ON_BOARD;
         }
         // check for forced jumped
-        ArrayList<BoardState> jumpSuccessors = this.state.peek().getSuccessors(true);
+        ArrayList<GameState> jumpSuccessors = this.state.peek().getSuccessors(true);
         boolean jumps = !jumpSuccessors.isEmpty();
         if (jumps) {
-            for (BoardState succ : jumpSuccessors) {
+            for (GameState succ : jumpSuccessors) {
                 if (succ.getFromPos() == fromPos && succ.getToPos() == toPos) {
                     updateState(succ);
-                    return MoveFeedback.SUCCESS;
+                    return Messages.SUCCESS;
                 }
             }
-            return MoveFeedback.FORCED_JUMP;
+            return Messages.FORCED_JUMP;
         }
         // check diagonal
         if (Math.abs(dx) != Math.abs(dy)) {
-            return MoveFeedback.NOT_DIAGONAL;
+            return Messages.NOT_DIAGONAL;
         }
         // check for move onto piece
         if (this.getState().state[toPos] != null) {
-            return MoveFeedback.NO_FREE_SPACE;
+            return Messages.NO_FREE_SPACE;
         }
         // check for non-jump moves
-        ArrayList<BoardState> nonJumpSuccessors = this.state.peek().getSuccessors(fromPos, false);
-        for (BoardState succ : nonJumpSuccessors) {
+        ArrayList<GameState> nonJumpSuccessors = this.state.peek().getSuccessors(fromPos, false);
+        for (GameState succ : nonJumpSuccessors) {
             if (succ.getFromPos() == fromPos && succ.getToPos() == toPos) {
                 updateState(succ);
-                return MoveFeedback.SUCCESS;
+                return Messages.SUCCESS;
             }
         }
         if (dy > 1) {
-            return MoveFeedback.NO_BACKWARD_MOVES_FOR_SINGLES;
+            return Messages.NO_BACKWARD_MOVES_FOR_SINGLES;
         }
         if (Math.abs(dx) == 2) {
-            return MoveFeedback.ONLY_SINGLE_DIAGONALS;
+            return Messages.ONLY_SINGLE_DIAGONALS;
         }
-        return MoveFeedback.UNKNOWN_INVALID;
+        return Messages.UNKNOWN_INVALID;
     }
 
-    public MoveFeedback moveFeedbackClick(int pos) {
-        ArrayList<BoardState> jumpSuccessors = this.state.peek().getSuccessors(true);
+    public Messages moveFeedbackClick(int pos) {
+        ArrayList<GameState> jumpSuccessors = this.state.peek().getSuccessors(true);
         if (!jumpSuccessors.isEmpty()) {
-            return MoveFeedback.FORCED_JUMP;
+            return Messages.FORCED_JUMP;
         } else {
-            return MoveFeedback.PIECE_BLOCKED;
+            return Messages.PIECE_BLOCKED;
         }
 
     }
 
-    public ArrayList<BoardState> getValidMoves(int pos) {
+    public ArrayList<GameState> getValidMoves(int pos) {
         return state.peek().getSuccessors(pos);
     }
 
     public void aiMove() {
-        // update state with AI move
-        if (!isGameOver() && state.peek().getTurn() == Player.AI) {
-            BoardState newState = ai.move(this.state.peek(), Player.AI);
+        // update state with ComputerEnemy move
+        if (!isGameOver() && state.peek().getTurn() == StartPlayer.AI) {
+            GameState newState = ai.makeMove(this.state.peek(), StartPlayer.AI);
             updateState(newState);
         }
     }
 
-    private void updateState(BoardState newState) {
+    private void updateState(GameState newState) {
         state.push(newState);
         if (state.size() > memory) {
             state.remove(0);
         }
     }
 
-    public BoardState getState() {
+    public GameState getState() {
         return state.peek();
     }
 
 
-    public Player getTurn() {
+    public StartPlayer getTurn() {
         return state.peek().getTurn();
     }
 
@@ -107,14 +107,14 @@ public class Game {
         boolean isOver = state.peek().isGameOver();
         if (isOver) {
             // get win / lose status
-            humanWon = state.peek().pieceCount.get(Player.AI) == 0;
+            playerWon = state.peek().pieceCount.get(StartPlayer.AI) == 0;
         }
         return isOver;
     }
 
     public String getGameOverMessage() {
         String result = "Game Over. ";
-        if (humanWon) {
+        if (playerWon) {
             result += "YOU WON!";
         } else {
             result += "YOU LOST!";
@@ -125,7 +125,7 @@ public class Game {
     public void undo() {
         if (state.size() > 2) {
             state.pop();
-            while (state.peek().getTurn() == Player.AI) {
+            while (state.peek().getTurn() == StartPlayer.AI) {
                 state.pop();
             }
         }
